@@ -187,7 +187,10 @@ function setupIPC() {
   ipcMain.handle('set-secret', (_e, key: string, value: string) => secretsStore.set(key, value))
   ipcMain.handle('delete-secret', (_e, key: string) => secretsStore.delete(key))
 
-  ipcMain.handle('open-settings', () => createSettingsWindow())
+  ipcMain.handle('open-settings', () => {
+    createSettingsWindow()
+    return true
+  })
 
   ipcMain.handle('get-provider-list', () => {
     return providerRegistry.map(p => ({

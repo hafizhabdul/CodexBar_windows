@@ -4,7 +4,8 @@ import { Input } from '../../components/ui/input'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
 import { Progress } from '../../components/ui/progress'
-import { ProviderLogo, providerColors } from '../../components/ProviderLogo'
+import { ProviderLogo } from '../../components/ProviderLogo'
+import { providerColors } from '../../lib/providerColors'
 import { cn, getUsageBarColor, getUsageBarBgColor, getUsageColor } from '../../lib/utils'
 import type { AppSettings, ProviderInfo, UsageSnapshot } from '../../../shared/types'
 
@@ -87,7 +88,7 @@ export function ProvidersSettings({ settings, providers, snapshots, onUpdate }: 
                       </span>
                     )}
                     {isEnabled && hasError && (
-                      <span className="text-[10px] text-red-400 block truncate flex items-center gap-0.5 font-medium">
+                      <span className="text-[10px] text-red-400 truncate flex items-center gap-0.5 font-medium">
                         <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
                         Error
                       </span>

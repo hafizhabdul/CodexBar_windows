@@ -1,7 +1,8 @@
 import { Progress } from './ui/progress'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { ProviderLogo, providerColors } from './ProviderLogo'
+import { ProviderLogo } from './ProviderLogo'
+import { providerColors } from '../lib/providerColors'
 import {
   cn,
   formatTimeUntil,
