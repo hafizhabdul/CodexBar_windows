@@ -74,32 +74,3 @@ export function getUsageBarBgColor(used: number, limit?: number): string {
     case 'safe': return 'bg-emerald-500/15'
   }
 }
-
-/** Map provider id → emoji icon */
-export function getProviderIcon(id: string): string {
-  const icons: Record<string, string> = {
-    claude: '🟠',
-    codex: '🟢',
-    cursor: '💜',
-    gemini: '💎',
-    copilot: '🤖',
-    openrouter: '🔀',
-    amp: '⚡',
-    augment: '🧿',
-    kiro: '🎯',
-    jetbrains: '🧠',
-    vertexai: '☁️',
-    zai: '✨',
-    ollama: '🦙',
-    warp: '🚀',
-    minimax: '🔲',
-    kimi: '🌙',
-    kimik2: '🌙',
-    kilo: '📊',
-    factory: '🏭',
-    antigravity: '🌀',
-    opencode: '📝',
-    synthetic: '🧪',
-  }
-  return icons[id] ?? '📌'
-}

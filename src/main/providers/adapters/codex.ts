@@ -15,6 +15,21 @@ interface CodexAuthData {
   refreshToken?: string
   account_id?: string
   accountId?: string
+  id_token?: string
+}
+
+interface CodexAuthFile {
+  auth_mode?: string
+  OPENAI_API_KEY?: string | null
+  tokens?: CodexAuthData
+  last_refresh?: string
+  // Flat format (legacy)
+  access_token?: string
+  accessToken?: string
+  refresh_token?: string
+  refreshToken?: string
+  account_id?: string
+  accountId?: string
 }
 
 interface CodexUsageResponse {
@@ -56,11 +71,28 @@ export class CodexAdapter implements ProviderAdapter {
       if (!result.error) return result
     }
 
-    // Strategy 3: CLI fallback
-    const cliResult = await this.fetchViaCLI()
-    if (cliResult && !cliResult.error) return cliResult
+    // Strategy 3: Try reading auth file directly for plan info (JWT claims)
+    const auth = this.loadAuthData()
+    if (auth) {
+      const accessToken = auth.access_token || auth.accessToken
+      if (accessToken) {
+        const planInfo = this.parsePlanFromJWT(accessToken)
+        if (planInfo) {
+          return this.makeSnapshot({
+            status: {
+              level: 'ok',
+              message: `Plan: ${planInfo}${oauthResult?.error ? ' (usage API unavailable)' : ''}`,
+            },
+          })
+        }
+      }
+    }
 
-    return oauthResult || cliResult || this.makeSnapshot({
+    // Strategy 4: CLI fallback (detect presence)
+    const cliResult = await this.fetchViaCLI()
+    if (cliResult) return cliResult
+
+    return oauthResult || this.makeSnapshot({
       error: { kind: 'auth', message: 'No Codex credentials found. Run `codex` CLI to authenticate, or add API key in Settings.' },
     })
   }
@@ -78,7 +110,16 @@ export class CodexAdapter implements ProviderAdapter {
       try {
         if (fs.existsSync(authPath)) {
           const raw = fs.readFileSync(authPath, 'utf-8')
-          const data = JSON.parse(raw)
+          const data: CodexAuthFile = JSON.parse(raw)
+
+          // Format 1: Nested tokens (codex-cli 0.107+)
+          // { auth_mode: "chatgpt", tokens: { access_token, refresh_token, account_id } }
+          if (data.tokens?.access_token || data.tokens?.accessToken) {
+            return data.tokens as CodexAuthData
+          }
+
+          // Format 2: Flat format (legacy / older versions)
+          // { access_token, refresh_token, account_id }
           if (data.access_token || data.accessToken) {
             return data as CodexAuthData
           }
@@ -244,47 +285,61 @@ export class CodexAdapter implements ProviderAdapter {
   }
 
   private async fetchViaCLI(): Promise<UsageSnapshot | null> {
-    const commands = [
-      'codex --version 2>nul',
-      'wsl.exe -e bash -lc "codex --version 2>/dev/null"',
+    // Check if Codex CLI is installed
+    const versionCommands = [
+      'codex --version',
     ]
 
-    let cliAvailable = false
-    for (const cmd of commands) {
+    let cliVersion = ''
+    for (const cmd of versionCommands) {
       try {
-        await execAsync(cmd, { timeout: 5000 })
-        cliAvailable = true
+        const { stdout } = await execAsync(cmd, { timeout: 5000 })
+        cliVersion = stdout.trim()
         break
       } catch { continue }
     }
-    if (!cliAvailable) return null
 
-    const usageCommands = [
-      'codex usage 2>nul',
-      'wsl.exe -e bash -lc "codex usage 2>/dev/null"',
-    ]
+    if (!cliVersion) return null
 
-    for (const cmd of usageCommands) {
-      try {
-        const { stdout } = await execAsync(cmd, { timeout: 15000 })
-        if (stdout.trim()) return this.parseCLIOutput(stdout.trim())
-      } catch { continue }
+    // CLI exists but OAuth strategies didn't work — the auth file may be missing
+    // or the token expired. Read auth file as a last resort to extract plan info
+    // from the JWT claims since `codex usage` subcommand doesn't exist.
+    const auth = this.loadAuthData()
+    if (auth) {
+      const accessToken = auth.access_token || auth.accessToken
+      if (accessToken) {
+        // Try to extract plan info from JWT claims without calling API
+        const planInfo = this.parsePlanFromJWT(accessToken)
+        if (planInfo) {
+          return this.makeSnapshot({
+            status: { level: 'ok', message: `Plan: ${planInfo} (CLI: ${cliVersion})` },
+          })
+        }
+      }
     }
-    return null
+
+    // CLI found but no usable auth data
+    return this.makeSnapshot({
+      status: { level: 'degraded', message: `Codex CLI detected (${cliVersion}). Run \`codex\` to authenticate.` },
+    })
   }
 
-  private parseCLIOutput(output: string): UsageSnapshot {
-    const creditsMatch = output.match(/credits?[:\s]+\$?([\d.]+)/i)
-    const sessionMatch = output.match(/(?:5h|session|primary)[:\s]+(\d+)%/i)
-    const weeklyMatch = output.match(/(?:weekly|secondary)[:\s]+(\d+)%/i)
-    const planMatch = output.match(/plan[:\s]+(\w+)/i)
-
-    return this.makeSnapshot({
-      session: sessionMatch ? { used: parseInt(sessionMatch[1], 10), limit: 100 } : undefined,
-      weekly: weeklyMatch ? { used: parseInt(weeklyMatch[1], 10), limit: 100 } : undefined,
-      credits: creditsMatch ? { remaining: Math.round(parseFloat(creditsMatch[1]) * 100), currency: 'USD' } : undefined,
-      status: planMatch ? { level: 'ok', message: `Plan: ${planMatch[1]}` } : undefined,
-    })
+  /** Extract plan type from JWT access token without API call */
+  private parsePlanFromJWT(token: string): string | null {
+    try {
+      const parts = token.split('.')
+      if (parts.length !== 3) return null
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'))
+      const auth = payload?.['https://api.openai.com/auth']
+      if (auth?.chatgpt_plan_type) {
+        const planLabels: Record<string, string> = {
+          guest: 'Guest', free: 'Free', go: 'Go', plus: 'Plus', pro: 'Pro',
+          team: 'Team', business: 'Business', enterprise: 'Enterprise',
+        }
+        return planLabels[auth.chatgpt_plan_type] || auth.chatgpt_plan_type
+      }
+    } catch { /* JWT parsing failed */ }
+    return null
   }
 
   private makeSnapshot(data: Partial<UsageSnapshot>): UsageSnapshot {

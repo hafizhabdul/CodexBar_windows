@@ -84,15 +84,14 @@ export class GeminiAdapter implements ProviderAdapter {
 
   private async fetchViaCLI(): Promise<UsageSnapshot | null> {
     const commands = [
-      'gemini --version 2>nul',
-      'wsl.exe -e bash -lc "gemini --version 2>/dev/null"',
+      'gemini --version',
     ]
 
     for (const cmd of commands) {
       try {
-        await execAsync(cmd, { timeout: 5000 })
+        const { stdout } = await execAsync(cmd, { timeout: 5000 })
         return this.makeSnapshot({
-          status: { level: 'ok', message: 'Plan: Gemini CLI' },
+          status: { level: 'ok', message: `Plan: Gemini CLI (${stdout.trim()})` },
         })
       } catch { continue }
     }

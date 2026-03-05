@@ -15,33 +15,61 @@ export function SettingsView() {
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-screen text-muted-foreground dark bg-background">
-        <div className="flex items-center gap-3">
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-          </svg>
-          <span className="text-sm">Loading settings…</span>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+          <span className="text-xs text-muted-foreground/60">Loading settings…</span>
         </div>
       </div>
     )
   }
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'providers', label: 'Providers', icon: '🔌' },
-    { id: 'general', label: 'General', icon: '⚙️' },
-    { id: 'about', label: 'About', icon: 'ℹ️' },
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    {
+      id: 'providers',
+      label: 'Providers',
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
+        </svg>
+      ),
+    },
+    {
+      id: 'general',
+      label: 'General',
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      ),
+    },
+    {
+      id: 'about',
+      label: 'About',
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+        </svg>
+      ),
+    },
   ]
 
   return (
     <div className="flex h-screen bg-background dark">
       {/* ── Sidebar ── */}
-      <div className="w-52 border-r border-border/60 bg-card/50 flex flex-col">
-        <div className="px-4 py-4 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🎚️</span>
-            <h2 className="text-sm font-bold tracking-tight">CodexBar</h2>
+      <div className="w-52 border-r border-border/50 bg-card/60 flex flex-col">
+        <div className="px-4 py-4 border-b border-border/30">
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
+              <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 20h.01" /><path d="M7 20v-4" /><path d="M12 20v-8" /><path d="M17 20V8" /><path d="M22 4v16" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold tracking-tight text-foreground">CodexBar</h2>
+              <p className="text-[10px] text-muted-foreground">Settings</p>
+            </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Settings</p>
         </div>
 
         <nav className="flex-1 p-2 space-y-0.5">
@@ -50,20 +78,25 @@ export function SettingsView() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-sm transition-all',
+                'w-full flex items-center gap-2.5 text-left px-3 py-2 rounded-lg text-[13px] transition-all duration-150',
                 tab === t.id
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  ? 'bg-primary/15 text-primary font-bold'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
               )}
             >
-              <span className="text-sm">{t.icon}</span>
+              <span className={cn(
+                'transition-colors',
+                tab === t.id ? 'text-primary' : 'text-muted-foreground'
+              )}>
+                {t.icon}
+              </span>
               {t.label}
             </button>
           ))}
         </nav>
 
-        <div className="p-3 border-t border-border/40">
-          <p className="text-[10px] text-muted-foreground text-center">v1.0.0</p>
+        <div className="p-3 border-t border-border/30">
+          <p className="text-[10px] text-muted-foreground text-center font-semibold tabular-nums">v1.0.0</p>
         </div>
       </div>
 
@@ -92,27 +125,27 @@ function AboutPane() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold">CodexBar for Windows</h3>
+        <h3 className="text-xl font-bold tracking-tight">About CodexBar</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          AI Provider Usage Monitor — May your tokens never run out ✨
+          AI Provider Usage Monitor for Windows
         </p>
       </div>
 
-      <div className="rounded-xl border bg-card p-5 space-y-4">
+      <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Version</p>
-            <p className="font-semibold mt-0.5">1.0.0</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Version</p>
+            <p className="font-bold mt-0.5 tabular-nums text-foreground">1.0.0</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Platform</p>
-            <p className="font-semibold mt-0.5">Windows (Electron)</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">Platform</p>
+            <p className="font-bold mt-0.5 text-foreground">Windows (Electron)</p>
           </div>
         </div>
 
-        <div className="border-t border-border/50 pt-4 space-y-2.5 text-sm">
+        <div className="border-t border-border/30 pt-4 space-y-2.5 text-sm">
           <p>
-            <span className="text-muted-foreground">Original: </span>
+            <span className="text-muted-foreground">Original project: </span>
             <a href="https://github.com/steipete/CodexBar" className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
               CodexBar by Peter Steinberger
             </a>
@@ -126,7 +159,7 @@ function AboutPane() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">Licensed under MIT</p>
+      <p className="text-[11px] text-muted-foreground">Licensed under MIT</p>
     </div>
   )
 }

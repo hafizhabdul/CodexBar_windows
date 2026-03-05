@@ -286,61 +286,28 @@ export class ClaudeAdapter implements ProviderAdapter {
     }
   }
 
-  /** Fetch via claude CLI —  parse /usage output */
+  /** Fetch via claude CLI —  detect presence and read auth */
   private async fetchViaCLI(): Promise<UsageSnapshot | null> {
     const commands = [
       'claude --version',
-      'wsl.exe -e bash -lc "claude --version"',
     ]
 
-    // First check if CLI exists
-    let cliAvailable = false
+    // Check if CLI exists
+    let cliVersion = ''
     for (const cmd of commands) {
       try {
-        await execAsync(cmd, { timeout: 5000 })
-        cliAvailable = true
+        const { stdout } = await execAsync(cmd, { timeout: 5000 })
+        cliVersion = stdout.trim()
         break
       } catch { continue }
     }
 
-    if (!cliAvailable) return null
+    if (!cliVersion) return null
 
-    // Try to get usage info
-    const usageCommands = [
-      'claude usage 2>nul',
-      'wsl.exe -e bash -lc "claude usage 2>/dev/null"',
-    ]
-
-    for (const cmd of usageCommands) {
-      try {
-        const { stdout } = await execAsync(cmd, { timeout: 15000 })
-        if (stdout.trim()) {
-          return this.parseCLIOutput(stdout.trim())
-        }
-      } catch { continue }
-    }
-
-    return null
-  }
-
-  private parseCLIOutput(output: string): UsageSnapshot {
-    // Parse CLI output like:
-    // "Current session: 45% used (resets in 2h 30m)"
-    // "Current week: 20% used (resets in 3d 5h)"
-    const sessionMatch = output.match(/session[:\s]+(\d+)%/i)
-    const weeklyMatch = output.match(/week[:\s]+(\d+)%/i)
-    const planMatch = output.match(/plan[:\s]+(\w+)/i)
-
+    // CLI is installed — auth credentials should be usable via OAuth strategy.
+    // If we got here, OAuth strategy failed. Indicate CLI is present but auth may be needed.
     return this.makeSnapshot({
-      session: sessionMatch ? {
-        used: parseInt(sessionMatch[1], 10),
-        limit: 100,
-      } : undefined,
-      weekly: weeklyMatch ? {
-        used: parseInt(weeklyMatch[1], 10),
-        limit: 100,
-      } : undefined,
-      status: planMatch ? { level: 'ok', message: `Plan: ${planMatch[1]}` } : undefined,
+      status: { level: 'degraded', message: `Claude CLI detected (${cliVersion}). Run \`claude\` to authenticate.` },
     })
   }
 

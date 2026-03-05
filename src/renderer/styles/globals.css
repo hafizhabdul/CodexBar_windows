@@ -29,16 +29,16 @@
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 6%;
-    --card-foreground: 213 31% 91%;
+    --background: 222 47% 5%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 96%;
     --primary: 217 91% 60%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 222 47% 11%;
     --secondary-foreground: 210 40% 98%;
     --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted-foreground: 215 20% 65%;
     --accent: 216 34% 17%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
@@ -47,8 +47,8 @@
     --success-foreground: 210 40% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
+    --border: 216 34% 20%;
+    --input: 216 34% 20%;
     --ring: 224 64% 33%;
   }
 }
@@ -59,7 +59,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-family: 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -68,20 +68,40 @@
     font-size: 14px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  /* Custom scrollbar for dark theme */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
+    background: hsl(var(--muted-foreground) / 0.2);
+    border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    background: hsl(var(--muted-foreground) / 0.4);
   }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.25s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
